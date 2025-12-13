@@ -1,0 +1,45 @@
+Question 1 - Briefly describe how you would approach designing and implementing a database to store your 
+model.
+Answer - 
+I would use a key-value store because the data has no predefined schema. 
+Each data type would be a key, and the value would store all records with their full payload, mirroring the current in-memory repository structure.
+
+Question 2 - Describe an authentication strategy that could be added to the TimeFilter endpoint
+Answer - 
+I would secure the TimeFilter endpoint using JWT-based authentication. 
+Clients include a signed JWT in the Authorization header, which is validated on each request to verify identity, expiry, and permissions before allowing access to the endpoint.
+
+Question 3 - Briefly describe a strategy for creating a CI-CD pipeline for the API created in earlier tasks.
+Answer - 
+I would use Jenkins to run CI-CD pipelines that execute automated tests and coverage checks for every PR. 
+Successful builds would produce a deployable artifact, such as a Docker image. 
+Jenkins would also deploy the same artifact to staging and production using environment-based configuration.
+
+
+## API Endpoints
+GET - /GetTypes
+POST - /TimeFilter
+
+We do not know what the data might look like other than that there is a 'DateTime' field that represents the time the communication was recorded.
+This request format was chosen because we know that those fields are required to make a proper TimeFilter request. If any of those fields are wrong, we get back a 400 HTTP response.
+
+Example Request body with datetimes in ISO format- 
+{
+  "DataTypes": ["Chats", "Emails"],
+  "FromTime": "2021-01-01",
+  "ToTime": "2021-01-03"
+}
+
+Example Response - 
+[
+    {
+        "Application": "Facebook",
+        "From": "john@yahoo.com",
+        "To": "Susan Smith",
+        "DateTime": "1-1-2021 9:00",
+        "Text": "Hi did you call me earlier?",
+        "id": 0,
+        "communicationType": "Chats",
+        "time": "2021-01-01T09:00:00"
+    }
+]

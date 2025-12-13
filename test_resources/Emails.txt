@@ -1,0 +1,3 @@
+﻿From|To|Cc|Bcc|DateTime|Subject|Body
+alice@email.com|bob@email.com,charles@email.com|||10-1-2021 11:00|Hello|How are you guys?
+bob@email.com|alice@email.com,charles@email.com|||11-1-2021 11:05|Hey|I'm fine I hope to meet with you guys today!?

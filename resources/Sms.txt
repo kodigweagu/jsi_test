@@ -1,0 +1,3 @@
+﻿From|To|DateTime|Text
+6135556666|6135557777|1-1-2021 10:00|Hello how are you?
+6135557777|6135556666|1-1-2021 10:01|I'm fine thanks! Yourself?

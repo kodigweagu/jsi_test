@@ -1,0 +1,5 @@
+# Ignore coverage data file
+.coverage
+
+# Ignore the coverage report directory (commonly named "coverage")
+coverage/

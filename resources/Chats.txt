@@ -1,0 +1,3 @@
+﻿Application|From|To|DateTime|Text
+Facebook|john@yahoo.com|Susan Smith|1-1-2021 9:00|Hi did you call me earlier?
+WhatsApp|6135557777|6135556666|1-1-2021 9:01|Let's go see a movie in the weekend?!
