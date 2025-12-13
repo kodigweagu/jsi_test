@@ -47,20 +47,22 @@ pytest --cov=.
 ```
 jsi_test/
 ├── app/
-│   ├── api.py                  # HTTP endpoints
-│   ├── main.py                 # App startup + wiring
-│   ├── parser.py               # Normalization logic
-│   └── repository.py           # In-memory data store
+│   ├── main.py
+│   ├── api.py
+│   ├── parser.py
+│   └── repository.py
 │
-├── resources/                  # data files
+├── resources/              # real data (used at runtime)
 │   ├── Chats.txt
 │   ├── Emails.txt
 │   └── Sms.txt
 │
-├── tests/                      # python tests
-│   ├── conftest.py             # pytest configuration
-│   ├── tests/test_get_types.py # full test coverage for GetTypes
-│   └── test_time_filter.py     # full test coverage for TimeFilter
+├── test_resources/         # test-only data
+│   ├── Chats.txt
+│   └── Emails.txt
+│
+├── tests/
+│   └── test_get_types.py
 │
 ├── requirements.txt # required dependencies
 └── README.md   # This file
