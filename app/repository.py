@@ -12,6 +12,6 @@ class InMemoryRepository:
         results = []
         for dt in data_types:
             for record in self._store.get(dt, []):
-                if from_time <= record["DateTime"] <= to_time:
+                if from_time <= record["time"] <= to_time:
                     results.append(record)
         return results
