@@ -4,5 +4,6 @@
 # Ignore the coverage report directory (commonly named "coverage")
 coverage/
 
-# Ignore Python cache files
+# Python byte-compiled files
 __pycache__/
+*.py[co]

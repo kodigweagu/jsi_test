@@ -30,7 +30,7 @@ def test_time_filter_multiple_types():
         )
 
         assert response.status_code == 200
-        types = {item["communicationType"] for item in response.json()}
+        types = set([item["communicationType"] for item in response.json()])
         for type in ["Chats", "Emails"]:
             assert type in types
 
