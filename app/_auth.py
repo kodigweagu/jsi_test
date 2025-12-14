@@ -6,7 +6,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 security = HTTPBearer()
 
 USER_DB = {
-    "admin": "your-secret-key"
+    "admin": "admin-password"
 }
 
 SECRET = "jwt-signing-secret"
