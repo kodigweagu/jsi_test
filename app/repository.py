@@ -3,7 +3,7 @@ class InMemoryRepository:
         self._store = {}
 
     def add(self, data_type, records):
-        self._store[data_type] = records
+        self._store.setdefault(data_type, []).extend(records)
 
     def get_types(self):
         return list(self._store.keys())
