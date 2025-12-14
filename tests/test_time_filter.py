@@ -1,21 +1,22 @@
-from fastapi.testclient import TestClient
-from app.main import app
-
-import jwt
 import time
+import jwt
 
-SECRET = "jwt-signing-secret"
-ALGORITHM = "HS256"
+from fastapi.testclient import TestClient
 
-def create_token(username: str, password: str, secret="bad-secret", expiry=int(time.time()) + 3600) -> str:
+from app.main import app
+from app._auth import SECRET, ALGORITHM
+
+
+def _create_token(username: str, password: str, secret: str = "bad-secret", expiry: int | None = None) -> str:
     payload = {
         "username": username,
         "password": password,
-        "exp": expiry
+        "exp": expiry or int(time.time()) + 3600
     }
     return jwt.encode(payload, secret, algorithm=ALGORITHM)
 
-VALID_TOKEN = create_token("admin", "your-secret-key", secret=SECRET)
+
+VALID_TOKEN = _create_token("admin", "your-secret-key", secret=SECRET)
 
 
 def _time_filter_request(data_types, from_time, to_time, token=VALID_TOKEN):
@@ -62,12 +63,12 @@ def test_time_filter_invalid_request():
     assert response.json()["detail"] == "Invalid request"
 
 
-def test_time_filter_invalid_token():
+def test_time_filter_bad_secret():
     response = _time_filter_request(
         ["Chats"],
         "2021-01-01T08:00",
         "2021-12-31T10:00",
-        token=create_token("admin", "your-secret-key", secret="bad-secret")
+        token=_create_token("admin", "your-secret-key", secret="bad-secret")
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid JWT token"
@@ -78,7 +79,7 @@ def test_time_filter_expired_token():
         ["Chats"],
         "2021-01-01T08:00",
         "2021-12-31T10:00",
-        token=create_token("admin", "your-secret-key", secret=SECRET, expiry=int(time.time()) - 10)
+        token=_create_token("admin", "your-secret-key", secret=SECRET, expiry=int(time.time()) - 10)
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid JWT token"
@@ -89,7 +90,7 @@ def test_time_filter_bad_user():
         ["Chats"],
         "2021-01-01T08:00",
         "2021-12-31T10:00",
-        token=create_token("bad-user", "your-secret-key", secret=SECRET)
+        token=_create_token("bad-user", "your-secret-key", secret=SECRET)
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid credentials"
@@ -100,7 +101,7 @@ def test_time_filter_bad_password():
         ["Chats"],
         "2021-01-01T08:00",
         "2021-12-31T10:00",
-        token=create_token("admin", "bad-password", secret=SECRET)
+        token=_create_token("admin", "bad-password", secret=SECRET)
     )
     assert response.status_code == 401
     assert response.json()["detail"] == "Invalid credentials"
