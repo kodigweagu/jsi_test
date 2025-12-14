@@ -93,8 +93,6 @@ Example Response -
         "To": "Susan Smith",
         "DateTime": "1-1-2021 9:00",
         "Text": "Hi did you call me earlier?",
-        "id": 0,
-        "communicationType": "Chats",
-        "time": "2021-01-01T09:00:00"
+        "communicationType": "Chats"
     }
 ]

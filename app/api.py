@@ -18,18 +18,6 @@ async def time_filter(request: Request):
     except (KeyError, ValueError):
         raise HTTPException(status_code=400, detail="Invalid request")
 
-    records = request.app.state.repo.filter_by_time(
+    return request.app.state.repo.filter_by_time(
         data_types, from_time, to_time
     )
-
-    response = []
-    for r in records:
-        item = r["data"].copy()
-        item.update({
-            "id": r["id"],
-            "communicationType": r["communicationType"],
-            "time": r["time"].isoformat()
-        })
-        response.append(item)
-
-    return response

@@ -1,14 +1,13 @@
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from pathlib import Path
-from app.parser import parse_file
+from app.csvparser import parse_file
 from app.repository import InMemoryRepository
 from app.api import router
 
-app = FastAPI()
-
-@app.on_event("startup")
-def startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
     repo = InMemoryRepository()
     resources_dir = Path(os.getenv("RESOURCES_DIR", "resources"))
 
@@ -18,5 +17,8 @@ def startup():
             repo.add(file_path.stem, records)
 
     app.state.repo = repo
+    yield
+
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(router)
