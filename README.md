@@ -20,6 +20,21 @@ cd jsi_test
 pip3 install -r requirements.txt
 ```
 
+## Install mongodb community version
+```bash
+xcode-select --install
+brew tap mongodb/brew
+brew update
+brew install mongodb-community@7.0
+```
+
+## Start mongodb community version
+```bash
+brew services start mongodb-community@7.0
+
+```
+
+
 ## Running the Application
 
 Start the FastAPI server:

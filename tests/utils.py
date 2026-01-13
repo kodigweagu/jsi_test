@@ -1,17 +1,26 @@
+"""Test helpers for auth tokens."""
+
 import time
 
 import jwt
 
-from app._auth import SECRET, ALGORITHM, USER_DB
+from app._auth import SECRET, ALGORITHM
 
 
-DEFAULT_USERNAME, DEFAULT_PASSWORD = next(iter(USER_DB.items()))
+DEFAULT_USERNAME = "admin"
+DEFAULT_PASSWORD = "admin-password"
 
 
-def make_token(username: str, password: str, secret: str = SECRET, expiry: int | None = None) -> str:
+def make_token(
+    username: str,
+    secret: str = SECRET,
+    expiry: int | None = None,
+) -> str:
+    """Create a signed JWT for testing."""
+    now = int(time.time())
     payload = {
-        "username": username,
-        "password": password,
-        "exp": expiry or int(time.time()) + 3600
+        "sub": username,
+        "iat": now,
+        "exp": expiry or now + 3600,
     }
     return jwt.encode(payload, secret, algorithm=ALGORITHM)

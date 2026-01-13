@@ -4,3 +4,9 @@ pytest
 pytest-cov
 httpx
 PyJWT
+python-dotenv
+pymongo
+passlib[bcrypt]
+bcrypt<4.1
+motor
+pytest-asyncio
