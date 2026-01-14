@@ -4,11 +4,13 @@ import os
 import time
 
 import jwt
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.repository import UserLookupError
 
+load_dotenv()
 security = HTTPBearer()
 
 SECRET = os.environ["JWT_SECRET"]
