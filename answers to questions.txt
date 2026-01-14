@@ -24,14 +24,41 @@ credentials in code or environment variables.
 
 Question 3 - Briefly describe a strategy for creating a CI-CD pipeline for the API created in earlier tasks.
 Answer - 
-CI would run on every PR: linting, unit/integration tests, and a container vulnerability scan. A
-successful build produces a Docker image tagged by commit SHA and pushes it to a registry.
+Jenkins would be triggered by GitHub webhooks on PRs and merges to main. The pipeline stages would look
+like this:
 
-CD would automatically deploy that image to staging, run smoke tests, then promote it to production using
-a canary rollout. Traffic shifts gradually from old to new (for example 5% -> 10% -> 25% -> 60% -> 100%).
-Alerting is critical: error rates, latency, and health checks should be monitored continuously during the
-canary window. Any regression triggers an automatic rollback to the previous version and creates an alert
-for engineering review.
+- Checkout the main branch from GitHub (or the PR branch for validation builds).
+- Install dependencies.
+- Lint the codebase.
+- Run tests and enforce coverage (fail the build if coverage is below the target).
+- Build a Docker image tagged with the commit SHA.
+- Run vulnerability scans (image and dependencies).
+- Push the image to the registry.
+
+CD would then automatically deploy to staging and verify the release:
+
+- Deploy to staging using Helm with the newly built image tag.
+- Run smoke tests against staging (/health, /ready, and a small happy-path flow).
+
+For production, use a canary rollout with the NGINX Ingress Controller:
+
+- The Helm chart templates two Ingress resources: a stable Ingress and a canary Ingress.
+- The canary Ingress has annotations like nginx.ingress.kubernetes.io/canary: "true" and
+  nginx.ingress.kubernetes.io/canary-weight: "5" for the initial traffic split.
+- Traffic weight is adjusted via helm upgrade --set canary.weight=... to shift traffic gradually.
+
+To avoid a long-running Jenkins job, use a cron-triggered “canary updater” pipeline:
+
+- On initial rollout, store the start time (Jenkins parameter, ConfigMap, or S3).
+- The cron job runs periodically (for example every 6 hours), reads the start time, computes elapsed
+  time, maps it to a target weight (5% → 25% → 50% → 75% → 100%), and applies it via Helm.
+- Typically you stop at 50–100%, then promote stable and disable the canary Ingress.
+
+Alerting and rollback:
+
+- Integrate Prometheus/Grafana or CloudWatch to monitor error rates, latency, and health.
+- Jenkins polls metrics during the canary window; if thresholds are exceeded, it rolls back and sends
+  Slack/Email alerts.
 
 Other improvements:
 I assumed we will always parse a pipe-delimited txt file.
