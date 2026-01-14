@@ -53,11 +53,36 @@ class _UserRepoStub:  # pylint: disable=too-few-public-methods
         return self.verify_result
 
 
-def _make_app(user_repo):
+class _MongoClientStub:  # pylint: disable=too-few-public-methods
+    """Mongo client stub for readiness checks."""
+    class _Admin:  # pylint: disable=too-few-public-methods
+        """Admin command stub."""
+        async def command(self, _command):
+            """Pretend ping succeeds."""
+            return {"ok": 1}
+
+    def __init__(self):
+        self.admin = self._Admin()
+
+
+class _FailingMongoClientStub:  # pylint: disable=too-few-public-methods
+    """Mongo client stub that fails readiness checks."""
+    class _Admin:  # pylint: disable=too-few-public-methods
+        """Admin command stub."""
+        async def command(self, _command):
+            """Raise to simulate DB failure."""
+            raise RuntimeError("db down")
+
+    def __init__(self):
+        self.admin = self._Admin()
+
+
+def _make_app(user_repo, mongo_client=None):
     """Create a FastAPI app with stubbed state."""
     app = FastAPI()
     app.state.repo = _RepoStub()
     app.state.user_repo = user_repo
+    app.state.mongo_client = mongo_client or _MongoClientStub()
     app.include_router(router)
     return app
 
@@ -97,6 +122,32 @@ def test_time_filter_uses_repo_stub():
         )
     assert response.status_code == 200
     assert response.json() == [{"communicationType": "Chats"}]
+
+
+def test_health_check():
+    """Return ok for liveness."""
+    app = _make_app(_UserRepoStub())
+    with TestClient(app) as client:
+        response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+def test_readiness_check_success():
+    """Return ready when Mongo ping succeeds."""
+    app = _make_app(_UserRepoStub(), mongo_client=_MongoClientStub())
+    with TestClient(app) as client:
+        response = client.get("/ready")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ready"}
+
+
+def test_readiness_check_failure():
+    """Return 503 when Mongo ping fails."""
+    app = _make_app(_UserRepoStub(), mongo_client=_FailingMongoClientStub())
+    with TestClient(app) as client:
+        response = client.get("/ready")
+    assert response.status_code == 503
 
 
 def test_login_invalid_credentials():

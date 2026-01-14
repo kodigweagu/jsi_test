@@ -7,6 +7,22 @@ from app.repository import UserAlreadyExistsError, UserCreateError, UserLookupEr
 router = APIRouter()
 
 
+@router.get("/health")
+async def health_check():
+    """Return basic liveness status."""
+    return {"status": "ok"}
+
+
+@router.get("/ready")
+async def readiness_check(request: Request):
+    """Return readiness status after checking MongoDB connectivity."""
+    try:
+        await request.app.state.mongo_client.admin.command("ping")
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail="Database unavailable") from exc
+    return {"status": "ready"}
+
+
 @router.get("/GetTypes")
 async def get_types(request: Request):
     """Return distinct communication types from the data store."""
