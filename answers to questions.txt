@@ -24,14 +24,18 @@ credentials in code or environment variables.
 
 Question 3 - Briefly describe a strategy for creating a CI-CD pipeline for the API created in earlier tasks.
 Answer - 
-Jenkins would be triggered by GitHub webhooks on PRs and merges to main. The pipeline stages would look
-like this:
+Jenkins would be triggered by GitHub webhooks on PRs and merges to main. 
+  In GitHub repo settings, add a webhook pointing to your Jenkins URL.
+  Configure the Jenkins job with the GitHub plugin.
+  Jenkins triggers on PR events and pushes/merges to main.
+
+The pipeline stages would look like this:
 
 - Checkout the main branch from GitHub (or the PR branch for validation builds).
 - Install dependencies.
 - Lint the codebase.
 - Run tests and enforce coverage (fail the build if coverage is below the target).
-- Build a Docker image tagged with the commit SHA.
+- Build a Docker image tagged with the build version using GitVersion.
 - Run vulnerability scans (image and dependencies).
 - Push the image to the registry.
 
@@ -60,7 +64,22 @@ Alerting and rollback:
 - Jenkins polls metrics during the canary window; if thresholds are exceeded, it rolls back and sends
   Slack/Email alerts.
 
-Other improvements:
+Outside-the-repo we will have to fulfil these requirements:
+
+- Jenkins plugins and job configuration (webhooks/branch triggers).
+- Jenkins credentials (GitHub token, AWS creds, kubeconfigs, Snyk/Sonar tokens).
+- ECR repo and IAM permissions.
+- Kubernetes cluster + NGINX Ingress Controller.
+- Monitoring/alerting stack (Prometheus/Grafana or CloudWatch).
+- Canary updater job. The Jenkinsfile.canary-updater is stored in the repo but you still need a Jenkins
+  Pipeline job that points to it, sets the script path (Jenkinsfile.canary-updater),
+  and supplies credentials (prod kubeconfig) plus the ROLLOUT_START_TIME
+  parameter (or a stored start time in S3/ConfigMap).
+  
+
+
+
+Other considerations:
 I assumed we will always parse a pipe-delimited txt file.
 There was also an assumption that DateTime is in the right format. I added a parser that can accept a
 wide range of formats using a date parsing library.

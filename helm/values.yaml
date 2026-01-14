@@ -1,0 +1,35 @@
+image:
+  repository: ""
+  tag: "latest"
+
+service:
+  port: 8000
+
+ingress:
+  host: "example.com"
+
+canary:
+  enabled: false
+  weight: 5
+
+secrets:
+  mongodbUri: ""
+  mongodbDb: ""
+  jwtSecret: ""
+
+resources:
+  requests:
+    cpu: "100m"
+    memory: "256Mi"
+  limits:
+    cpu: "500m"
+    memory: "512Mi"
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  memoryUtilization: 70
+  requestsPerPod:
+    metricName: "requests_per_second"
+    averageValue: "20"

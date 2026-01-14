@@ -1,0 +1,71 @@
+pipeline {
+  agent any
+
+  triggers {
+    cron('H */6 * * *')
+  }
+
+  parameters {
+    string(name: 'ROLLOUT_START_TIME', defaultValue: '', description: 'Epoch seconds for rollout start')
+  }
+
+  environment {
+    AWS_REGION = "us-east-1"
+    ECR_ACCOUNT_ID = "123456789012"
+    IMAGE_NAME = "myapp"
+    ECR_REPO = "${ECR_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${IMAGE_NAME}"
+    ALERTMANAGER_URL = "https://alertmanager.example.com"
+  }
+
+  stages {
+    stage("Update Canary Weight") {
+      steps {
+        withKubeConfig([credentialsId: "kubeconfig-prod"]) {
+          script {
+            def startTime = params.ROLLOUT_START_TIME ?: ""
+            if (!startTime) {
+              error("ROLLOUT_START_TIME parameter is required")
+            }
+
+            def alerts = sh(
+              script: "curl -fsS ${ALERTMANAGER_URL}/api/v2/alerts?active=true",
+              returnStdout: true
+            ).trim()
+            if (alerts && alerts != "[]") {
+              echo "Active alerts detected, rolling back."
+              sh """
+                PREV_REV=\$(helm history myapp --namespace prod | tail -n 2 | head -n 1 | awk '{print \$1}')
+                if [ -n \"\${PREV_REV}\" ]; then
+                  helm rollback myapp \${PREV_REV} --namespace prod || true
+                fi
+                helm upgrade myapp ./helm --namespace prod --set canary.enabled=false
+              """
+              error("Rollback triggered due to alerts")
+            }
+
+            def now = System.currentTimeMillis() / 1000
+            def elapsedHours = (now - startTime.toLong()) / 3600
+            def weight = 5
+
+            if (elapsedHours >= 336) {
+              weight = 100
+            } else if (elapsedHours >= 216) {
+              weight = 75
+            } else if (elapsedHours >= 144) {
+              weight = 50
+            } else if (elapsedHours >= 72) {
+              weight = 25
+            }
+
+            sh """
+              helm upgrade myapp ./helm \
+                --namespace prod \
+                --set canary.enabled=true \
+                --set canary.weight=${weight}
+            """
+          }
+        }
+      }
+    }
+  }
+}

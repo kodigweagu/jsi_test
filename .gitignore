@@ -6,4 +6,5 @@ coverage/
 
 # Python byte-compiled files
 __pycache__/
+.DS_Store
 .env

@@ -34,19 +34,46 @@ uvicorn app.main:app --reload
 API base: `http://localhost:8000`  
 Docs: `http://localhost:8000/docs`
 
+## CI/CD
+This repo includes:
+- `Jenkinsfile` for CI/CD.
+- `Jenkinsfile.canary-updater` for cron-based canary weight updates.
+
+External requirements:
+- Jenkins plugins + credentials (GitHub, AWS, kubeconfig, Snyk/Sonar).
+- ECR repo + IAM permissions.
+- Kubernetes cluster with NGINX Ingress Controller.
+- Monitoring/alerting (Prometheus/Grafana or CloudWatch).
+
 ## Testing
 ```bash
-pytest
+pytest --ignore=tests/smoke
 ```
 
 Coverage:
 ```bash
-pytest --cov --cov-report=term-missing
+pytest --cov --cov-report=term-missing  --ignore=tests/smoke
 ```
 
 Tests use a dedicated database suffix: `<MONGODB_DB>_test`.
 
 ## API
+
+### GET `/health`
+Response:
+```json
+{
+  "status": "ok"
+}
+```
+
+### GET `/ready`
+Response:
+```json
+{
+  "status": "ready"
+}
+```
 
 ### POST `/Login`
 Request:
