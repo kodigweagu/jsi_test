@@ -1,34 +1,26 @@
-const header = {
-  alg: "HS256",
-  typ: "JWT"
-};
+const baseUrl = pm.environment.get("base_url") || "http://localhost:8000";
+const username = pm.environment.get("username");
+const password = pm.environment.get("password");
 
-const payload = {
-  username: pm.environment.get("username"),
-  password: pm.environment.get("password"),
-  exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour expiry
-};
-
-const secret = pm.environment.get("jwt_secret");
-
-// Postman has CryptoJS built in
-function base64url(source) {
-  return CryptoJS.enc.Base64.stringify(source)
-    .replace(/=+$/, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}
-
-const encodedHeader = base64url(CryptoJS.enc.Utf8.parse(JSON.stringify(header)));
-const encodedPayload = base64url(CryptoJS.enc.Utf8.parse(JSON.stringify(payload)));
-
-const signature = CryptoJS.HmacSHA256(
-  encodedHeader + "." + encodedPayload,
-  secret
+pm.sendRequest(
+  {
+    url: `${baseUrl}/Login`,
+    method: "POST",
+    header: { "Content-Type": "application/json" },
+    body: {
+      mode: "raw",
+      raw: JSON.stringify({
+        Username: username,
+        Password: password
+      })
+    }
+  },
+  function (err, res) {
+    if (err) {
+      console.log("Login error:", err);
+      return;
+    }
+    const data = res.json();
+    pm.environment.set("jwt_token", data.access_token);
+  }
 );
-
-const encodedSignature = base64url(signature);
-
-const token = `${encodedHeader}.${encodedPayload}.${encodedSignature}`;
-
-pm.environment.set("jwt_token", token);

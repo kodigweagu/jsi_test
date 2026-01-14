@@ -69,7 +69,7 @@ Response:
 ["Chats", "Emails", "Sms"]
 ```
 
-### POST `/TimeFilter`
+### POST `/TimeFilter`  (login required)
 Request:
 ```json
 {
