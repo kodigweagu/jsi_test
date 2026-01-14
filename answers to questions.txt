@@ -1,48 +1,39 @@
 Question 1 - Briefly describe how you would approach designing and implementing a database to store your 
 model.
 Answer - 
-I would use a key-value store because the data has no predefined schema. 
-Each data type would be a key, and the value would store all records with their full payload, mirroring the current in-memory repository structure.
+I would use a document database like MongoDB because the data has no fixed schema. The only consistent
+fields are communicationType and DateTime, while the rest of the payload varies per record. Each record
+would be stored as a document in a records collection with an id hash, communicationType, time, and the
+raw fields from the source file.
+
+To support queries, I would add a compound index on communicationType + time for the /TimeFilter
+endpoint and a unique index on id to avoid duplicate inserts when reloading data. I would also maintain
+a types collection (reference counted) for fast /GetTypes lookups, and expose a /ReconcileTypes endpoint
+to rebuild it if needed.
 
 Question 2 - Describe an authentication strategy that could be added to the TimeFilter endpoint
 Answer - 
-I would secure the TimeFilter endpoint using JWT-based authentication. 
-Clients include a signed JWT in the Authorization header, which is validated on each request to verify identity, expiry, and permissions before allowing access to the endpoint.
+I would secure the TimeFilter endpoint with JWT-based authentication. Clients log in with username and
+password via /Login, receive a JWT, and include it in the Authorization header. JWT verification is
+cheap and stateless, so each request only needs to validate signature, expiry, and the subject (sub).
+
+For admin-only operations, I would check the is_admin flag on the user record. I would expose
+/RegisterUser for admin users to create new users, but the first admin user would be manually inserted
+into the database (with a bcrypt password hash and password_changed_at). This avoids shipping admin
+credentials in code or environment variables.
 
 Question 3 - Briefly describe a strategy for creating a CI-CD pipeline for the API created in earlier tasks.
 Answer - 
-I would use Jenkins to run CI-CD pipelines that execute automated tests and coverage checks for every PR. 
-Successful builds would produce a deployable artifact, such as a Docker image. 
-Jenkins would also deploy the same artifact to staging and production using environment-based configuration.
+CI would run on every PR: linting, unit/integration tests, and a container vulnerability scan. A
+successful build produces a Docker image tagged by commit SHA and pushes it to a registry.
 
-
-## API Endpoints
-GET - /GetTypes
-POST - /TimeFilter
-
-We do not know what the data might look like other than that there is a 'DateTime' field that represents the time the communication was recorded.
-This request format was chosen because we know that those fields are required to make a proper TimeFilter request. If any of those fields are wrong, we get back a 400 HTTP response.
-
-Example Request body with datetimes in ISO format- 
-{
-  "DataTypes": ["Chats", "Emails"],
-  "FromTime": "2021-01-01",
-  "ToTime": "2021-01-03"
-}
-
-Example Response - 
-[
-    {
-        "Application": "Facebook",
-        "From": "john@yahoo.com",
-        "To": "Susan Smith",
-        "DateTime": "1-1-2021 9:00",
-        "Text": "Hi did you call me earlier?",
-        "communicationType": "Chats"
-    }
-]
+CD would automatically deploy that image to staging, run smoke tests, then promote it to production using
+a canary rollout. Traffic shifts gradually from old to new (for example 5% -> 10% -> 25% -> 60% -> 100%).
+Alerting is critical: error rates, latency, and health checks should be monitored continuously during the
+canary window. Any regression triggers an automatic rollback to the previous version and creates an alert
+for engineering review.
 
 Other improvements:
-
-I assumed we will always parse a pipe delimited CSV file. We need an interface to abstract the data parsing.
-There is also an assumption thet the DateTime is in the right format.
+I assumed we will always parse a pipe-delimited txt file.
+There was also an assumption that DateTime is in the right format. I added a parser that can accept a
+wide range of formats using a date parsing library.
