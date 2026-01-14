@@ -1,113 +1,139 @@
 # JSI Test - FastAPI Backend
 
 ## Overview
-This project implements a FastAPI backend solution for the JSI Engineering Applicant Test. Refer to "JSI Engineering Applicant Test-Backend.pdf" for detailed project requirements and specifications.
+FastAPI backend for the JSI Engineering Applicant Test. See `JSI Engineering Applicant Test-Backend.pdf` for requirements.
 
 ## Prerequisites
-- Python 3.8 or higher
-- pip (Python package manager)
+- Python 3.8+
+- MongoDB 7+
 
 ## Installation
-
-1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd jsi_test
+pip install -r requirements.txt
 ```
 
-2. Install dependencies:
-```bash
-pip3 install -r requirements.txt
-```
-
-## Install mongodb community version
-```bash
-xcode-select --install
-brew tap mongodb/brew
-brew update
-brew install mongodb-community@7.0
-```
-
-## Start mongodb community version
-```bash
-brew services start mongodb-community@7.0
+## Configuration
+Create a `.env` file using `.env.example`:
 
 ```
+JWT_SECRET="change-me"
+MONGODB_URI="mongodb://localhost:27017"
+MONGODB_DB="jsi_test"
+RESOURCES_DIR="resources"
+```
 
+Notes:
+- MongoDB must be running and reachable at `MONGODB_URI`.
+- Records are loaded from `RESOURCES_DIR` on startup.
 
-## Running the Application
-
-Start the FastAPI server:
+## Running
 ```bash
 uvicorn app.main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
-
-Access the interactive Swagger UI documentation at `http://localhost:8000/docs`
+API base: `http://localhost:8000`  
+Docs: `http://localhost:8000/docs`
 
 ## Testing
-
-Run tests with pytest:
 ```bash
 pytest
 ```
 
-Run tests with coverage:
+Coverage:
 ```bash
-pytest --cov=.
+pytest --cov --cov-report=term-missing
 ```
+
+Tests use a dedicated database suffix: `<MONGODB_DB>_test`.
+
+## API
+
+### POST `/Login`
+Request:
+```json
+{
+  "Username": "admin",
+  "Password": "admin-password"
+}
+```
+Response:
+```json
+{
+  "access_token": "jwt-token"
+}
+```
+
+### GET `/GetTypes`
+Response:
+```json
+["Chats", "Emails", "Sms"]
+```
+
+### POST `/TimeFilter`
+Request:
+```json
+{
+  "DataTypes": ["Chats", "Emails"],
+  "FromTime": "2021-01-01T08:00",
+  "ToTime": "2021-12-31T10:00"
+}
+```
+Response:
+```json
+[
+  {
+    "Application": "Facebook",
+    "From": "john@yahoo.com",
+    "To": "Susan Smith",
+    "Text": "Hi did you call me earlier?",
+    "communicationType": "Chats",
+    "time": "2021-01-01T09:00:00"
+  }
+]
+```
+
+### POST `/RegisterUser` (admin only)
+Request:
+```json
+{
+  "Username": "new-user",
+  "Password": "new-password",
+  "IsAdmin": false
+}
+```
+Response:
+```json
+{
+  "status": "created"
+}
+```
+
+### POST `/ReconcileTypes` (admin only)
+Response:
+```json
+[
+  {"type": "Chats", "count": 120},
+  {"type": "Emails", "count": 45}
+]
+```
+
+## Auth
+JWTs include `sub`, `iat`, and `exp` claims.
+Tokens become invalid if `password_changed_at` is later than the token `iat`.
 
 ## Project Structure
 ```
 jsi_test/
 ├── app/
-│   ├── main.py
+│   ├── __init__.py
+│   ├── _auth.py
 │   ├── api.py
-│   ├── parser.py
+│   ├── csvparser.py
+│   ├── main.py
 │   └── repository.py
-│
-├── resources/              # real data (used at runtime)
-│   ├── Chats.txt
-│   ├── Emails.txt
-│   └── Sms.txt
-│
-├── test_resources/         # test-only data
-│   ├── Chats.txt
-│   └── Emails.txt
-│
+├── resources/
+├── test_resources/
 ├── tests/
-│   └── test_get_types.py
-│
-├── requirements.txt # required dependencies
-└── README.md   # This file
+├── requirements.txt
+└── README.md
 ```
-
-## API Documentation
-Interactive Swagger UI documentation is available at `/docs` when the server is running.
-
-## API Endpoints
-GET - /GetTypes
-POST - /TimeFilter
-
-We do not know what the data might look like other than that there is a 'DateTime' field that represents the time the communication was recorded.
-This request format was chosen because we know that those fields are required to make a proper TimeFilter request. If any of those fields are wrong, we get back a 400 HTTP response.
-
-Example Request body with datetimes in ISO format- 
-{
-  "DataTypes": ["Chats", "Emails"],
-  "FromTime": "2021-01-01",
-  "ToTime": "2021-01-03"
-}
-
-Example Response - 
-[
-    {
-        "Application": "Facebook",
-        "From": "john@yahoo.com",
-        "To": "Susan Smith",
-        "DateTime": "1-1-2021 9:00",
-        "Text": "Hi did you call me earlier?",
-        "communicationType": "Chats"
-    }
-]
