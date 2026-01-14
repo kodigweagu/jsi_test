@@ -48,9 +48,11 @@ async def register_user(request: Request, _username: str = Depends(verify_admin)
             is_admin=is_admin,
         )
     except UserAlreadyExistsError as exc:
-        raise HTTPException(status_code=409, detail="User already exists") from exc
+        raise HTTPException(
+            status_code=409, detail="User already exists") from exc
     except UserCreateError as exc:
-        raise HTTPException(status_code=500, detail="Failed to create user") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to create user") from exc
 
     return {"status": "created"}
 
@@ -69,7 +71,8 @@ async def login(request: Request):
         if not await request.app.state.user_repo.verify_password(username, password):
             raise HTTPException(status_code=401, detail="Invalid credentials")
     except UserLookupError as exc:
-        raise HTTPException(status_code=500, detail="Failed to verify credentials") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to verify credentials") from exc
 
     return {"access_token": create_access_token(username)}
 

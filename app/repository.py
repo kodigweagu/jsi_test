@@ -93,9 +93,11 @@ class MongoRecordsRepository:
         await self._types_collection.delete_many({})
         if grouped:
             await self._types_collection.insert_many(
-                [{"type": doc["_id"], "count": doc["count"]} for doc in grouped]
+                [{"type": record_type["_id"], "count": record_type["count"]}
+                    for record_type in grouped]
             )
-        return [{"type": record_type["_id"], "count": record_type["count"]} for record_type in grouped]
+        return [{"type": record_type["_id"], "count": record_type["count"]}
+                for record_type in grouped]
 
 
 class MongoUserRepository:
@@ -120,7 +122,8 @@ class MongoUserRepository:
                 }
             )
         except DuplicateKeyError as exc:
-            raise UserAlreadyExistsError(f"User '{username}' already exists") from exc
+            raise UserAlreadyExistsError(
+                f"User '{username}' already exists") from exc
         except PyMongoError as exc:
             logger.exception("Failed to create user '%s'", username)
             raise UserCreateError("Failed to create user") from exc
@@ -148,7 +151,8 @@ class MongoUserRepository:
                 {"_id": 0, "password_hash": 1},
             )
         except PyMongoError as exc:
-            logger.exception("Failed to load user '%s' for password verification", username)
+            logger.exception(
+                "Failed to load user '%s' for password verification", username)
             raise UserLookupError("Failed to verify credentials") from exc
         if not user:
             return False

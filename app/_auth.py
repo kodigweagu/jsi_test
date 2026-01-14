@@ -2,10 +2,12 @@
 
 import os
 import time
+
 import jwt
 from fastapi import Depends, HTTPException, Request
-from app.repository import UserLookupError
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+
+from app.repository import UserLookupError
 
 security = HTTPBearer()
 
@@ -20,9 +22,11 @@ async def verify_jwt(
 ) -> str:
     """Validate a JWT and return the username."""
     try:
-        payload = jwt.decode(credentials.credentials, SECRET, algorithms=[ALGORITHM])
+        payload = jwt.decode(credentials.credentials,
+                             SECRET, algorithms=[ALGORITHM])
     except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=401, detail="Invalid JWT token") from exc
+        raise HTTPException(
+            status_code=401, detail="Invalid JWT token") from exc
 
     username = payload.get("sub")
     issued_at = payload.get("iat")
@@ -32,7 +36,8 @@ async def verify_jwt(
     try:
         user = await request.app.state.user_repo.get_user(username)
     except UserLookupError as exc:
-        raise HTTPException(status_code=500, detail="Failed to verify credentials") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to verify credentials") from exc
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
     password_changed_at = user.get("password_changed_at")
@@ -51,9 +56,11 @@ async def verify_admin(
     try:
         user = await request.app.state.user_repo.get_user(username)
     except UserLookupError as exc:
-        raise HTTPException(status_code=500, detail="Failed to verify credentials") from exc
+        raise HTTPException(
+            status_code=500, detail="Failed to verify credentials") from exc
     if not user or not user.get("is_admin"):
-        raise HTTPException(status_code=403, detail="Admin privileges required")
+        raise HTTPException(
+            status_code=403, detail="Admin privileges required")
     return username
 
 

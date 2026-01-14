@@ -16,6 +16,7 @@ sys.path.insert(0, str(ROOT_DIR))
 load_dotenv()
 os.environ.setdefault("JWT_SECRET", "test-secret")
 
+# pylint: disable=wrong-import-position
 from tests.utils import DEFAULT_USERNAME, DEFAULT_PASSWORD
 
 
@@ -24,11 +25,11 @@ os.environ["RESOURCES_DIR"] = "test_resources"
 
 mongo_uri = os.environ["MONGODB_URI"]
 base_db = os.environ["MONGODB_DB"]
-test_db = f"{base_db}_test"
-os.environ["MONGODB_DB"] = test_db
+TEST_DB = f"{base_db}_test"
+os.environ["MONGODB_DB"] = TEST_DB
 
 client = MongoClient(mongo_uri)
-db = client[test_db]
+db = client[TEST_DB]
 db.records.delete_many({})
 db.types.delete_many({})
 db.users.delete_many({})
